@@ -1,0 +1,111 @@
+import sys 
+import numpy as np
+import torch
+from torch import nn
+sys.path.append("../model/") # path to this folder
+from load import *
+
+class LinearProbingClassifier(nn.Module):
+
+    def __init__(self, ckpt_path,frozenmore=True):
+        super().__init__()
+        self.ckpt_path = ckpt_path
+        self.frozenmore = frozenmore
+
+    def build(self):
+        model,model_config = load_model_frommmf(self.ckpt_path)
+        self.token_emb = model.token_emb
+        self.pos_emb = model.pos_emb
+        self.encoder = model.encoder
+
+        print(model)  # 看看模型结构，有没有 token_emb / pos_emb / encoder
+
+        if self.frozenmore:
+            for _,p in self.token_emb.named_parameters():
+                p.requires_grad = False
+            for _,p in self.pos_emb.named_parameters():
+                p.requires_grad = False
+            print('self.pos_emb and self.token_emb also frozen')
+        
+        for na, param in self.encoder.named_parameters():
+            param.requires_grad = False
+        for na, param in self.encoder.transformer_encoder[-2].named_parameters():
+            print('self.encoder.transformer_encoder ',na,' have grad')
+            param.requires_grad = True
+
+
+        self.fc1 = nn.Sequential(
+        nn.Linear(model_config['encoder']['hidden_dim'], 256),
+        nn.ReLU(),
+        nn.Linear(256, 10)  # ['n_class']
+        ) 
+        self.norm = torch.nn.BatchNorm1d(model_config['encoder']['hidden_dim'], affine=False, eps=1e-6)
+        self.model_config = model_config
+        
+    def forward(self, sample_list, *args, **kwargs):
+        
+        label = sample_list['targets']
+
+        x = sample_list['x'] # (B, L)
+        value_labels = x > 0
+        x, x_padding = gatherData(x, value_labels, self.model_config['pad_token_id'])
+        data_gene_ids = torch.arange(19264, device=x.device).repeat(x.shape[0], 1)
+        position_gene_ids, _ = gatherData(data_gene_ids, value_labels,
+                                        self.model_config['pad_token_id'])
+        
+        x = self.token_emb(torch.unsqueeze(x, 2).float(), output_weight = 0)
+        position_emb = self.pos_emb(position_gene_ids)
+        x += position_emb
+
+        logits = self.encoder(x,x_padding)
+
+        # mlp
+        logits, _ = torch.max(logits, dim=1)  # b,dim
+
+        logits = self.norm(logits)
+        logits = self.fc1(logits)
+
+        return logits
+
+if __name__=='__main__':
+    original_model=torch.load("/home/xt/DATA/lwc/scfoundation/model/models/models.ckpt", map_location=torch.device('cpu'))
+    gene_data = original_model['gene']
+    print("_" * 100)
+    # 获取 'gene' 相关数据
+    if 'gene' in original_model:
+        gene_data = original_model['gene']
+        print("1" + "*" * 100)
+        print("Gene keys:", gene_data.keys())  # 查看 gene 数据的 keys
+        # 提取配置和模型参数
+        gene_config = gene_data.get('config', {})
+        gene_state_dict = gene_data.get('state_dict', {})
+        print("2"+"*" * 100)
+        print("Gene Config:", gene_config)  # 打印 gene 配置
+        print("3"+"*" * 100)
+        print("Gene State Dict Keys:", gene_state_dict.keys())  # 打印模型参数 keys
+        print("*" * 100)
+    else:
+        print("'gene' key not found in checkpoint!")
+    print("_" * 100)
+
+    finetune_model = LinearProbingClassifier(ckpt_path='./models/models.ckpt')
+    # finetune_model = LinearProbingClassifier(ckpt_path='/home/xt/DATA/lwc/scfoundation/fine_tunning/model/finetuned_model317.ckpt')
+
+    sample_list = {'x': torch.zeros([8,18264]).cuda(),'targets':torch.rand(8,12).cuda()}
+    sample_list['x'][:,:100]=1
+    finetune_model.build()
+    print("*"*100)
+    print(finetune_model)  # 打印模型结构
+    print("*"*100)
+    checkpoint = {
+        'gene': {
+            'config': finetune_model.model_config,  # 使用微调后的 config
+            'state_dict': finetune_model.state_dict()  # 保存微调后的参数
+        }
+    }
+    # print("Checkpoint 1 keys:", finetune_model.keys())
+    finetune_model = finetune_model.cuda()
+    finetune_model(sample_list)
+
+    # torch.save(finetune_model,"/home/xt/DATA/lwc/scfoundation/fine_tunning/model/finetuned_model317.ckpt")
+    torch.save(checkpoint, "/home/xt/DATA/lwc/scfoundation/fine_tunning/model/finetuned_model318.ckpt")

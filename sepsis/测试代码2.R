@@ -1,33 +1,33 @@
 # ================================
-# 0. 设置工作环境
+# 0. Setup working environment
 # ================================
 rm(list = ls())
-set.seed(1615)  # 设置随机数种子以保证结果可重复
-library(dplyr)        # 数据处理
-library(ggplot2)      # 数据可视化
-library(tidyr)        # 数据重塑
-library(pROC)         # ROC曲线分析
-library(splines)      # 限制性样条函数
-library(segmented)    # 分段回归
-library(survival)     # 生存分析
-library(glmnet)       # LASSO回归
-library(rms)          # 校准曲线
-library(vcd)          # 可视化关联
-library(corrplot)     # 相关性图
-library(igraph)       # 网络图
-library(patchwork)    # 组合图表
-library(mgcv)         # 广义加性模型
-library(boot)         # Bootstrap分析
-library(pheatmap)     # 热图
-library(survminer)    # 生存分析可视化
-library(caret)        # 机器学习工具
-library(SHAPforxgboost)  # SHAP值计算
+set.seed(1615)  # Set random seed for reproducible results
+library(dplyr)        # Data processing
+library(ggplot2)      # Data visualization
+library(tidyr)        # Data transformation
+library(pROC)         # ROC curve analysis
+library(splines)      # Restricted spline functions
+library(segmented)    # Segmented regression
+library(survival)     # Survival analysis
+library(glmnet)       # LASSO regression
+library(rms)          # Calibration curves
+library(vcd)          # Association visualization
+library(corrplot)     # Correlation plots
+library(igraph)       # Network graphs
+library(patchwork)    # Combined plots
+library(mgcv)         # Generalized additive models
+library(boot)         # Bootstrap analysis
+library(pheatmap)     # Heatmaps
+library(survminer)    # Survival analysis visualization
+library(caret)        # Machine learning tools
+library(SHAPforxgboost)  # SHAP value calculation
 
 # ================================
-# 1. 创建模拟数据
+# 1. Create simulation data
 # ================================
 
-# 1.1 患者基本信息数据
+# 1.1 Patient basic information data
 n_patients <- 150  # 样本量
 
 # 基本人口统计学和临床特征
@@ -555,10 +555,10 @@ print(resistance_by_count)
 p1 <- ggplot(resistance_by_count, aes(x = antibiotic_count, y = resistance_rate)) +
   geom_point(aes(size = n_patients), color = "darkblue", alpha = 0.7) +
   geom_line() +
-  labs(title = "全人群: 抗生素种类数与耐药风险的关系", 
-       x = "抗生素种类数", 
-       y = "耐药菌检出率",
-       size = "患者数") +
+  labs(title = "Entire Population: Relationship between Number of Antibiotics and Resistance Risk", 
+       x = "Number of Antibiotics", 
+       y = "Resistance Detection Rate",
+       size = "Number of Patients") +
   theme_minimal() +
   ylim(0, 1)
 
@@ -593,11 +593,11 @@ for (sg in names(subgroups)) {
   p <- ggplot(sg_resistance_by_count, aes(x = antibiotic_count, y = resistance_rate, color = .data[[sg_var]])) +
     geom_point(aes(size = n_patients), alpha = 0.7) +
     geom_smooth(method = "loess", se = TRUE) +
-    labs(title = paste0(sg_name, ": 抗生素种类数与耐药风险的关系"), 
-         x = "抗生素种类数", 
-         y = "耐药菌检出率",
+    labs(title = paste0(sg_name, ": Relationship between Number of Antibiotics and Resistance Risk"), 
+         x = "Number of Antibiotics", 
+         y = "Resistance Detection Rate",
          color = sg_name,
-         size = "患者数") +
+         size = "Number of Patients") +
     theme_minimal() +
     ylim(0, 1)
   
@@ -1182,9 +1182,9 @@ p9 <- ggplot(resistance_by_ddd_all, aes(x = total_ddd_group, y = resistance_rate
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0(round(resistance_rate * 100, 1), "%")), 
             position = position_dodge(width = 0.9), vjust = -0.5) +
-  labs(title = "全人群: 累计DDD与耐药风险", 
-       x = "累计DDD四分位组", 
-       y = "耐药率") +
+  labs(title = "Entire Population: Cumulative DDD and Resistance Risk", 
+       x = "Cumulative DDD Quartile Groups", 
+       y = "Resistance Rate") +
   theme_minimal() +
   theme(legend.position = "none")
 
@@ -1437,16 +1437,16 @@ for(combo in unique(patients$spectrum_combination)) {
 combination_resistance_wide <- combination_resistance_types %>%
   pivot_wider(names_from = resistance_type, values_from = detection_rate)
 
-# 可视化联合方式与耐药谱系的关系
+# Visualize the relationship between combination methods and resistance spectrum
 if(nrow(combination_resistance_wide) > 1) {
   heatmap_matrix <- as.matrix(combination_resistance_wide[, 3:7])
   rownames(heatmap_matrix) <- combination_resistance_wide$combination
   
-  # 如果有足够的数据点，创建热图
+  # If there are enough data points, create heatmap
   pheatmap(heatmap_matrix, 
            display_numbers = TRUE, 
            number_format = "%.2f",
-           main = "抗生素联合方式与耐药谱系的关系",
+           main = "Antibiotic Combination Methods vs Resistance Spectrum",
            fontsize = 10,
            fontsize_number = 10)
 }

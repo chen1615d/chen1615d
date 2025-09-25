@@ -1,25 +1,25 @@
-# 设置工作环境
+# Setup working environment
 rm(list = ls())
-set.seed(1615)  # 设置随机数种子以保证结果可重复
-library(dplyr)        # 数据处理
-library(ggplot2)      # 数据可视化
-library(tidyr)        # 数据重塑
-library(pROC)         # ROC曲线分析
-library(splines)      # 限制性样条函数
-library(segmented)    # 分段回归
-library(survival)     # 生存分析
-library(glmnet)       # LASSO回归
-library(rms)          # 校准曲线
-library(vcd)          # 可视化关联
-library(corrplot)     # 相关性图
-library(igraph)       # 网络图
-library(patchwork)    # 组合图表
+set.seed(1615)  # Set random seed for reproducible results
+library(dplyr)        # Data processing
+library(ggplot2)      # Data visualization
+library(tidyr)        # Data transformation
+library(pROC)         # ROC curve analysis
+library(splines)      # Restricted spline functions
+library(segmented)    # Segmented regression
+library(survival)     # Survival analysis
+library(glmnet)       # LASSO regression
+library(rms)          # Calibration curves
+library(vcd)          # Association visualization
+library(corrplot)     # Correlation plots
+library(igraph)       # Network graphs
+library(patchwork)    # Combined plots
 
 # ================================
-# 1. 创建模拟数据####
+# 1. Create simulation data####
 # ================================
 
-# 1.1 患者基本信息数据
+# 1.1 Patient basic information data
 n_patients <- 150  # 样本量
 
 # 基本人口统计学和临床特征
@@ -413,21 +413,21 @@ p1 <- ggplot(patients, aes(x = factor(death_28d), y = age, fill = factor(death_2
   geom_boxplot() +
   scale_fill_manual(values = c("0" = "skyblue", "1" = "salmon"), 
                     labels = c("Survivors", "Non-survivors")) +
-  labs(title = "年龄比较", x = "患者状态", y = "年龄(岁)", fill = "状态") +
+  labs(title = "Age Comparison", x = "Patient Status", y = "Age (years)", fill = "Status") +
   theme_minimal()
 
 p2 <- ggplot(patients, aes(x = factor(death_28d), y = SOFA_score, fill = factor(death_28d))) +
   geom_boxplot() +
   scale_fill_manual(values = c("0" = "skyblue", "1" = "salmon"), 
                     labels = c("Survivors", "Non-survivors")) +
-  labs(title = "SOFA评分比较", x = "患者状态", y = "SOFA评分", fill = "状态") +
+  labs(title = "SOFA Score Comparison", x = "Patient Status", y = "SOFA Score", fill = "Status") +
   theme_minimal()
 
 p3 <- ggplot(patients, aes(x = factor(death_28d), y = antibiotic_count, fill = factor(death_28d))) +
   geom_boxplot() +
   scale_fill_manual(values = c("0" = "skyblue", "1" = "salmon"), 
                     labels = c("Survivors", "Non-survivors")) +
-  labs(title = "抗生素种类数比较", x = "患者状态", y = "抗生素种类数", fill = "状态") +
+  labs(title = "Antibiotic Count Comparison", x = "Patient Status", y = "Number of Antibiotics", fill = "Status") +
   theme_minimal()
 
 plot_combined <- p1 + p2 + p3 + plot_layout(ncol = 3)
@@ -446,77 +446,77 @@ print(table(patients$adjustment_mode))
 # 可视化抗生素使用特征
 p4 <- ggplot(patients, aes(x = antibiotic_count)) +
   geom_bar(fill = "steelblue") +
-  labs(title = "抗生素种类数分布", x = "抗生素种类数", y = "患者数") +
+  labs(title = "Antibiotic Count Distribution", x = "Number of Antibiotics", y = "Number of Patients") +
   theme_minimal()
 
 p5 <- ggplot(patients, aes(x = combination_mode, fill = combination_mode)) +
   geom_bar() +
   scale_fill_brewer(palette = "Set2") +
-  labs(title = "联合用药模式分布", x = "联合用药模式", y = "患者数", fill = "联合用药模式") +
+  labs(title = "Combination Therapy Pattern Distribution", x = "Combination Therapy Pattern", y = "Number of Patients", fill = "Combination Therapy Pattern") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plot_combined_2 <- p4 + p5 + plot_layout(ncol = 2)
 print(plot_combined_2)
 
-# 微生物学和耐药特征分析
-cat("\n微生物学和耐药特征\n")
+# Microbiology and resistance characteristics analysis
+cat("\nMicrobiology and Resistance Characteristics\n")
 cat("==================\n")
-cat("耐药菌检出率:", mean(patients$resistance_detected), "\n")
-cat("耐药分类分布:\n")
+cat("Resistant bacteria detection rate:", mean(patients$resistance_detected), "\n")
+cat("Resistance classification distribution:\n")
 print(table(patients$mdr_class))
-cat("病原菌分布:\n")
+cat("Pathogen distribution:\n")
 print(table(microbiology$pathogen))
-cat("耐药类型分布:\n")
+cat("Resistance type distribution:\n")
 print(table(microbiology$resistance))
 
-# 可视化微生物学特征
+# Visualize microbiology features
 p6 <- ggplot(data = microbiology, aes(x = pathogen)) +
   geom_bar(fill = "darkgreen") +
-  labs(title = "病原菌分布", x = "病原菌", y = "检出数") +
+  labs(title = "Pathogen Distribution", x = "Pathogen", y = "Detection Count") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p7 <- ggplot(data = microbiology[microbiology$resistance != "None", ], aes(x = resistance)) +
   geom_bar(fill = "darkred") +
-  labs(title = "耐药类型分布", x = "耐药类型", y = "检出数") +
+  labs(title = "Resistance Type Distribution", x = "Resistance Type", y = "Detection Count") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plot_combined_3 <- p6 + p7 + plot_layout(ncol = 2)
 print(plot_combined_3)
 
-# 临床结局分析
-cat("\n临床结局分析\n")
+# Clinical outcome analysis
+cat("\nClinical Outcome Analysis\n")
 cat("==================\n")
-cat("28天死亡率:", mean(patients$death_28d), "\n")
-cat("治疗失败率:", mean(patients$treatment_failure), "\n")
-cat("72小时临床反应分布:\n")
+cat("28-day mortality rate:", mean(patients$death_28d), "\n")
+cat("Treatment failure rate:", mean(patients$treatment_failure), "\n")
+cat("72-hour clinical response distribution:\n")
 print(table(patients$clinical_response_72h))
-cat("ICU住院日(均值±标准差):", mean(patients$icu_los), "±", sd(patients$icu_los), "\n")
-cat("总住院日(均值±标准差):", mean(patients$hospital_los), "±", sd(patients$hospital_los), "\n")
+cat("ICU length of stay (mean±SD):", mean(patients$icu_los), "±", sd(patients$icu_los), "\n")
+cat("Total hospital length of stay (mean±SD):", mean(patients$hospital_los), "±", sd(patients$hospital_los), "\n")
 
 # 可视化临床结局
 p8 <- ggplot(patients, aes(x = clinical_response_72h, fill = clinical_response_72h)) +
   geom_bar() +
   scale_fill_manual(values = c("Improved" = "forestgreen", "Stable" = "gold", "Deteriorated" = "firebrick")) +
-  labs(title = "72小时临床反应", x = "临床反应", y = "患者数", fill = "临床反应") +
+  labs(title = "72-Hour Clinical Response", x = "Clinical Response", y = "Number of Patients", fill = "Clinical Response") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p9 <- ggplot(patients, aes(x = death_28d, fill = factor(death_28d))) +
   geom_bar() +
   scale_fill_manual(values = c("0" = "skyblue", "1" = "salmon"), 
-                    labels = c("存活", "死亡")) +
-  labs(title = "28天生存状态", x = "患者状态", y = "患者数", fill = "状态") +
-  scale_x_continuous(breaks = c(0, 1), labels = c("存活", "死亡")) +
+                    labels = c("Survived", "Died")) +
+  labs(title = "28-Day Survival Status", x = "Patient Status", y = "Number of Patients", fill = "Status") +
+  scale_x_continuous(breaks = c(0, 1), labels = c("Survived", "Died")) +
   theme_minimal()
 
 plot_combined_4 <- p8 + p9 + plot_layout(ncol = 2)
 print(plot_combined_4)
 
 # ================================
-# 3.2 抗生素多样性与耐药风险分析
+# 3.2 Antibiotic diversity and resistance risk analysis
 # ================================
 
 # 抗生素种类数与耐药风险的关系
@@ -618,21 +618,21 @@ shannon_model <- glm(resistance_detected ~ shannon_index + age + SOFA_score,
                      family = binomial, data = patients)
 summary(shannon_model)
 
-# 分析Shannon指数与抗生素种类数的关系
+# Analyze the relationship between Shannon index and antibiotic count
 p12 <- ggplot(patients, aes(x = antibiotic_count, y = shannon_index)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "loess") +
-  labs(title = "抗生素种类数与多样性指数的关系", 
-       x = "抗生素种类数", 
-       y = "Shannon多样性指数") +
+  labs(title = "Relationship between Antibiotic Count and Diversity Index", 
+       x = "Number of Antibiotics", 
+       y = "Shannon Diversity Index") +
   theme_minimal()
 
 p13 <- ggplot(patients, aes(x = shannon_index, y = as.numeric(resistance_detected))) +
   geom_point(alpha = 0.3) +
   geom_smooth(method = "glm", method.args = list(family = "binomial"), color = "blue") +
-  labs(title = "Shannon多样性指数与耐药风险", 
-       x = "Shannon多样性指数", 
-       y = "耐药风险") +
+  labs(title = "Shannon Diversity Index and Resistance Risk", 
+       x = "Shannon Diversity Index", 
+       y = "Resistance Risk") +
   theme_minimal() +
   ylim(-0.05, 1.05)
 
@@ -640,11 +640,11 @@ plot_combined_5 <- p12 + p13 + plot_layout(ncol = 2)
 print(plot_combined_5)
 
 # ================================
-# 3.3 抗菌药物分类与耐药风险####
+# 3.3 Antimicrobial classification and resistance risk####
 # ================================
 
-# 不同抗菌药物大类与耐药风险的关系
-# 计算每个抗菌药物大类的使用频率和耐药率
+# Relationship between different antimicrobial classes and resistance risk
+# Calculate usage frequency and resistance rate for each antimicrobial class
 antibiotic_class_analysis <- antibiotics %>%
   group_by(antibiotic_class) %>%
   dplyr::summarize(
@@ -733,7 +733,7 @@ common_combos <- combinations_vs_resistance %>%
 
 print(common_combos)
 
-# 热图数据准备 - 药物组合与特定耐药类型
+# Heatmap data preparation - drug combinations vs specific resistance types
 resistance_types <- c("ESBL", "CRE", "MRSA", "VRE", "MDR-Acinetobacter")
 heatmap_data <- data.frame()
 
@@ -761,25 +761,240 @@ for (combo in common_combos$combination) {
   }
 }
 
-# 创建热图
+# Create heatmap
 heatmap_data_wide <- heatmap_data %>%
   pivot_wider(names_from = resistance_type, values_from = detection_rate)
 
 heatmap_matrix <- as.matrix(heatmap_data_wide[, -1])
 rownames(heatmap_matrix) <- heatmap_data_wide$combination
 
-# 如果有足够的数据点，创建热图
+# If there are enough data points, create heatmap
 if(nrow(heatmap_matrix) > 1 && ncol(heatmap_matrix) > 1) {
   p16 <- heatmap(heatmap_matrix, 
                  scale = "none", 
                  Rowv = NA, Colv = NA,
                  col = colorRampPalette(c("white", "red"))(100),
-                 main = "抗菌药物组合与特定耐药菌检出率",
+                 main = "Antimicrobial Combination vs Specific Resistance Detection Rate",
                  margins = c(8, 10))
 }
 
-# Logistic回归分析特定抗菌药物与耐药风险
-# 为每位患者创建每类抗生素使用的标记
+# ================================
+# 10-fold validation biomarker clustering heatmaps
+# ================================
+
+# Function to create biomarker clustering heatmap
+create_biomarker_heatmap <- function(data, title_suffix = "", save_path = NULL) {
+  # Create biomarker matrix - combinations as biomarkers
+  if(nrow(heatmap_data) == 0) return(NULL)
+  
+  biomarker_matrix_data <- heatmap_data %>%
+    pivot_wider(names_from = resistance_type, values_from = detection_rate, values_fill = 0)
+  
+  if(nrow(biomarker_matrix_data) < 2) return(NULL)
+  
+  biomarker_matrix <- as.matrix(biomarker_matrix_data[, -1])
+  rownames(biomarker_matrix) <- biomarker_matrix_data$combination
+  
+  # Create heatmap using pheatmap for better clustering
+  if(require(pheatmap, quietly = TRUE)) {
+    p <- pheatmap(biomarker_matrix,
+                  clustering_distance_rows = "euclidean",
+                  clustering_distance_cols = "euclidean", 
+                  clustering_method = "complete",
+                  display_numbers = TRUE,
+                  number_format = "%.2f",
+                  main = paste("Biomarker Clustering Heatmap", title_suffix),
+                  fontsize = 10,
+                  fontsize_number = 8,
+                  color = colorRampPalette(c("white", "orange", "red"))(100))
+    
+    # Save heatmap if path provided
+    if(!is.null(save_path)) {
+      pheatmap(biomarker_matrix,
+               clustering_distance_rows = "euclidean",
+               clustering_distance_cols = "euclidean", 
+               clustering_method = "complete",
+               display_numbers = TRUE,
+               number_format = "%.2f",
+               main = paste("Biomarker Clustering Heatmap", title_suffix),
+               fontsize = 10,
+               fontsize_number = 8,
+               color = colorRampPalette(c("white", "orange", "red"))(100),
+               filename = save_path,
+               width = 10, height = 8)
+    }
+    
+    return(p)
+  } else {
+    # Fallback to base heatmap
+    heatmap(biomarker_matrix,
+            main = paste("Biomarker Clustering Heatmap", title_suffix),
+            col = colorRampPalette(c("white", "orange", "red"))(100),
+            margins = c(8, 10))
+  }
+}
+
+# Create output directory for heatmaps
+output_dir <- "heatmap_outputs"
+if(!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+# 1. Single validation biomarker clustering heatmap
+cat("\nGenerating single validation biomarker clustering heatmap...\n")
+single_heatmap <- create_biomarker_heatmap(heatmap_data, 
+                                          title_suffix = "(Single Validation)",
+                                          save_path = file.path(output_dir, "single_validation_biomarker_heatmap.png"))
+
+# 2. 10-fold cross-validation biomarker clustering heatmaps
+cat("Performing 10-fold cross-validation for biomarker analysis...\n")
+
+# Function for 10-fold validation
+perform_10fold_validation <- function(patients_data, microbiology_data, combinations_data, n_folds = 10) {
+  set.seed(1615)  # For reproducibility
+  
+  # Create folds
+  n_patients <- nrow(patients_data)
+  fold_indices <- sample(rep(1:n_folds, length.out = n_patients))
+  
+  # Store results from each fold
+  fold_results <- list()
+  
+  for(fold in 1:n_folds) {
+    cat(paste("Processing fold", fold, "of", n_folds, "...\n"))
+    
+    # Split data into training and validation
+    train_patients <- patients_data[fold_indices != fold, ]
+    val_patients <- patients_data[fold_indices == fold, ]
+    
+    # Get training data microbiology and combinations
+    train_micro <- microbiology_data[microbiology_data$patient_id %in% train_patients$patient_id, ]
+    train_combos <- combinations_data[combinations_data$patient_id %in% train_patients$patient_id, ]
+    
+    # Calculate biomarker detection rates for this fold
+    fold_heatmap_data <- data.frame()
+    
+    # Get common combinations for this fold
+    fold_common_combos <- train_combos %>%
+      group_by(combination) %>%
+      dplyr::summarize(
+        count = n(),
+        resistance_rate = mean(resistance != "None")
+      ) %>%
+      filter(count >= 2)  # Lower threshold for fold data
+    
+    if(nrow(fold_common_combos) == 0) next
+    
+    for (combo in fold_common_combos$combination) {
+      for (res_type in resistance_types) {
+        patients_using_combo <- train_combos$patient_id[train_combos$combination == combo]
+        
+        resistance_count <- 0
+        for (pid in patients_using_combo) {
+          patient_micro <- train_micro[train_micro$patient_id == pid, ]
+          if (nrow(patient_micro) > 0 && any(patient_micro$resistance == res_type)) {
+            resistance_count <- resistance_count + 1
+          }
+        }
+        
+        detection_rate <- resistance_count / length(patients_using_combo)
+        
+        fold_heatmap_data <- rbind(fold_heatmap_data, data.frame(
+          combination = combo,
+          resistance_type = res_type,
+          detection_rate = detection_rate,
+          fold = fold
+        ))
+      }
+    }
+    
+    fold_results[[fold]] <- fold_heatmap_data
+  }
+  
+  return(fold_results)
+}
+
+# Perform 10-fold validation
+validation_results <- perform_10fold_validation(patients, microbiology, combinations_vs_resistance, n_folds = 10)
+
+# Aggregate results across folds
+aggregate_validation_data <- data.frame()
+for(fold in 1:length(validation_results)) {
+  if(!is.null(validation_results[[fold]]) && nrow(validation_results[[fold]]) > 0) {
+    aggregate_validation_data <- rbind(aggregate_validation_data, validation_results[[fold]])
+  }
+}
+
+# Calculate mean detection rates across folds for robust biomarker analysis
+if(nrow(aggregate_validation_data) > 0) {
+  robust_biomarker_data <- aggregate_validation_data %>%
+    group_by(combination, resistance_type) %>%
+    dplyr::summarize(
+      mean_detection_rate = mean(detection_rate, na.rm = TRUE),
+      sd_detection_rate = sd(detection_rate, na.rm = TRUE),
+      n_folds = n(),
+      .groups = 'drop'
+    ) %>%
+    filter(n_folds >= 3)  # Only include biomarkers seen in at least 3 folds
+  
+  # Create 10-fold validation biomarker clustering heatmap
+  cat("Generating 10-fold validation biomarker clustering heatmap...\n")
+  
+  if(nrow(robust_biomarker_data) > 0) {
+    # Prepare data for heatmap
+    robust_heatmap_data <- robust_biomarker_data %>%
+      select(combination, resistance_type, detection_rate = mean_detection_rate)
+    
+    # Create the robust heatmap
+    robust_biomarker_matrix_data <- robust_heatmap_data %>%
+      pivot_wider(names_from = resistance_type, values_from = detection_rate, values_fill = 0)
+    
+    if(nrow(robust_biomarker_matrix_data) >= 2) {
+      robust_biomarker_matrix <- as.matrix(robust_biomarker_matrix_data[, -1])
+      rownames(robust_biomarker_matrix) <- robust_biomarker_matrix_data$combination
+      
+      # Create 10-fold validation heatmap
+      if(require(pheatmap, quietly = TRUE)) {
+        pheatmap(robust_biomarker_matrix,
+                 clustering_distance_rows = "euclidean",
+                 clustering_distance_cols = "euclidean", 
+                 clustering_method = "complete",
+                 display_numbers = TRUE,
+                 number_format = "%.2f",
+                 main = "Robust Biomarker Clustering Heatmap (10-Fold Validation)",
+                 fontsize = 10,
+                 fontsize_number = 8,
+                 color = colorRampPalette(c("white", "lightblue", "darkblue"))(100),
+                 filename = file.path(output_dir, "10fold_validation_biomarker_heatmap.png"),
+                 width = 12, height = 10)
+        
+        # Also display the plot
+        pheatmap(robust_biomarker_matrix,
+                 clustering_distance_rows = "euclidean",
+                 clustering_distance_cols = "euclidean", 
+                 clustering_method = "complete",
+                 display_numbers = TRUE,
+                 number_format = "%.2f",
+                 main = "Robust Biomarker Clustering Heatmap (10-Fold Validation)",
+                 fontsize = 10,
+                 fontsize_number = 8,
+                 color = colorRampPalette(c("white", "lightblue", "darkblue"))(100))
+      }
+      
+      cat("Successfully generated both single and 10-fold validation biomarker clustering heatmaps!\n")
+      cat("Heatmaps saved to:", output_dir, "\n")
+    } else {
+      cat("Not enough robust biomarkers found for 10-fold validation heatmap.\n")
+    }
+  } else {
+    cat("No robust biomarkers found across folds.\n")
+  }
+} else {
+  cat("No validation data generated.\n")
+}
+
+# Logistic regression analysis of specific antimicrobials and resistance risk
+# Create markers for each patient's use of each antibiotic class
 for (class in unique(antibiotics$antibiotic_class)) {
   patients[[paste0("uses_", gsub(" ", "_", tolower(class)))]] <- 
     sapply(patients$patient_id, function(pid) {
@@ -974,9 +1189,9 @@ mortality_by_adjustment <- patients %>%
 ggplot(mortality_by_adjustment, aes(x = adjustment_mode, y = mortality_rate, fill = adjustment_mode)) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0(round(mortality_rate, 1), "%")), vjust = -0.5) +
-  labs(title = "不同治疗调整策略的28天死亡率",
-       x = "治疗调整策略",
-       y = "28天死亡率 (%)") +
+  labs(title = "28-Day Mortality Rate by Treatment Adjustment Strategy",
+       x = "Treatment Adjustment Strategy",
+       y = "28-Day Mortality Rate (%)") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")
@@ -1048,8 +1263,8 @@ ggplot(cox_results, aes(x = hazard_ratio, y = variable)) +
   geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "red") +
   scale_x_log10() +
-  labs(title = "治疗调整对28天死亡的风险比(Cox模型)",
-       x = "风险比(HR) [Log尺度]",
+  labs(title = "Hazard Ratio of Treatment Adjustment on 28-Day Mortality (Cox Model)",
+       x = "Hazard Ratio (HR) [Log Scale]",
        y = "") +
   theme_minimal()
 
@@ -1112,9 +1327,9 @@ icu_los_by_adjustment <- patients %>%
 # 绘制箱线图比较不同调整策略的ICU住院时间
 ggplot(patients, aes(x = adjustment_mode, y = icu_los, fill = adjustment_mode)) +
   geom_boxplot() +
-  labs(title = "不同治疗调整策略的ICU住院时间",
-       x = "治疗调整策略",
-       y = "ICU住院天数") +
+  labs(title = "ICU Length of Stay by Treatment Adjustment Strategy",
+       x = "Treatment Adjustment Strategy",
+       y = "ICU Days") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")
@@ -1412,9 +1627,9 @@ roc_combined <- rbind(roc_base_data, roc_full_data)
 ggplot(roc_combined, aes(x = FPR, y = TPR, color = Model)) +
   geom_line(size = 1) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray50") +
-  labs(title = "死亡风险预测模型 - ROC曲线比较",
-       x = "1 - 特异性",
-       y = "敏感性") +
+  labs(title = "Mortality Risk Prediction Model - ROC Curve Comparison",
+       x = "1 - Specificity",
+       y = "Sensitivity") +
   annotate("text", x = 0.7, y = 0.3, 
            label = paste("基础模型 AUC =", round(auc_base_test, 3)), 
            color = "blue") +

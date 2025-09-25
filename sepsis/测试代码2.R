@@ -1437,16 +1437,16 @@ for(combo in unique(patients$spectrum_combination)) {
 combination_resistance_wide <- combination_resistance_types %>%
   pivot_wider(names_from = resistance_type, values_from = detection_rate)
 
-# 可视化联合方式与耐药谱系的关系
+# Visualize the relationship between combination methods and resistance spectrum
 if(nrow(combination_resistance_wide) > 1) {
   heatmap_matrix <- as.matrix(combination_resistance_wide[, 3:7])
   rownames(heatmap_matrix) <- combination_resistance_wide$combination
   
-  # 如果有足够的数据点，创建热图
+  # If there are enough data points, create heatmap
   pheatmap(heatmap_matrix, 
            display_numbers = TRUE, 
            number_format = "%.2f",
-           main = "抗生素联合方式与耐药谱系的关系",
+           main = "Antibiotic Combination Methods vs Resistance Spectrum",
            fontsize = 10,
            fontsize_number = 10)
 }

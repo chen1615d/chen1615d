@@ -1263,8 +1263,8 @@ ggplot(cox_results, aes(x = hazard_ratio, y = variable)) +
   geom_errorbarh(aes(xmin = lower_ci, xmax = upper_ci), height = 0.2) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "red") +
   scale_x_log10() +
-  labs(title = "治疗调整对28天死亡的风险比(Cox模型)",
-       x = "风险比(HR) [Log尺度]",
+  labs(title = "Hazard Ratio of Treatment Adjustment on 28-Day Mortality (Cox Model)",
+       x = "Hazard Ratio (HR) [Log Scale]",
        y = "") +
   theme_minimal()
 
@@ -1327,9 +1327,9 @@ icu_los_by_adjustment <- patients %>%
 # 绘制箱线图比较不同调整策略的ICU住院时间
 ggplot(patients, aes(x = adjustment_mode, y = icu_los, fill = adjustment_mode)) +
   geom_boxplot() +
-  labs(title = "不同治疗调整策略的ICU住院时间",
-       x = "治疗调整策略",
-       y = "ICU住院天数") +
+  labs(title = "ICU Length of Stay by Treatment Adjustment Strategy",
+       x = "Treatment Adjustment Strategy",
+       y = "ICU Days") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")
@@ -1627,9 +1627,9 @@ roc_combined <- rbind(roc_base_data, roc_full_data)
 ggplot(roc_combined, aes(x = FPR, y = TPR, color = Model)) +
   geom_line(size = 1) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray50") +
-  labs(title = "死亡风险预测模型 - ROC曲线比较",
-       x = "1 - 特异性",
-       y = "敏感性") +
+  labs(title = "Mortality Risk Prediction Model - ROC Curve Comparison",
+       x = "1 - Specificity",
+       y = "Sensitivity") +
   annotate("text", x = 0.7, y = 0.3, 
            label = paste("基础模型 AUC =", round(auc_base_test, 3)), 
            color = "blue") +

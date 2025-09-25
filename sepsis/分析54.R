@@ -1,5 +1,5 @@
-# 1.数据生成####
-# 加载必要的包
+# 1. Data Generation####
+# Load necessary packages
 rm(list = ls())
 library(tidyverse)
 library(lubridate)
@@ -13,22 +13,22 @@ library(glmnet)
 library(survival)
 library(survminer)
 
-# 设置随机种子确保可重复性
+# Set random seed for reproducibility
 set.seed(2025)
 
-# 生成模拟患者基本信息数据
+# Generate simulated patient basic information data
 generate_patient_data <- function(n = 200) {
-  # 患者ID
+  # Patient ID
   patient_id <- paste0("P", sprintf("%03d", 1:n))
   
-  # 基本特征
+  # Basic characteristics
   age <- round(rnorm(n, 65, 12))
-  gender <- sample(c("男", "女"), n, replace = TRUE, prob = c(0.6, 0.4))
+  gender <- sample(c("Male", "Female"), n, replace = TRUE, prob = c(0.6, 0.4))
   weight <- round(rnorm(n, 65, 10))
   height <- round(rnorm(n, 165, 8))
   bmi <- round(weight / ((height/100)^2), 1)
   
-  # 基础疾病 (0=无, 1=有)
+  # Comorbidities (0=no, 1=yes)
   hypertension <- rbinom(n, 1, 0.45)
   diabetes <- rbinom(n, 1, 0.25)
   heart_disease <- rbinom(n, 1, 0.20)
